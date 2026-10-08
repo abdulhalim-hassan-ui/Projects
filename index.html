@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Halim Piano — Play Your Keys</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#090b14;
+    --panel:rgba(20,24,42,.72);
+    --panel2:rgba(255,255,255,.055);
+    --text:#f7f8ff;
+    --muted:#9da5c0;
+    --accent:#8b5cf6;
+    --accent2:#22d3ee;
+    --glow:rgba(139,92,246,.45);
+    --white:#f8f8fb;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; min-height:100vh; overflow-x:hidden;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 15% 10%,rgba(124,58,237,.22),transparent 28%),
+      radial-gradient(circle at 85% 20%,rgba(34,211,238,.13),transparent 26%),
+      radial-gradient(circle at 50% 100%,rgba(236,72,153,.10),transparent 30%),
+      var(--bg);
+  }
+  body:before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.22;
+    background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:42px 42px;
+    mask-image:linear-gradient(to bottom,black,transparent 90%);
+  }
+  .wrap{width:min(1120px,calc(100% - 34px));margin:auto}
+  header{padding:30px 0 10px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:20px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),#ec4899);
+    box-shadow:0 12px 35px var(--glow);font-size:23px
+  }
+  .brand h1{font-size:20px;margin:0;letter-spacing:-.5px}
+  .brand p{font-size:11px;color:var(--muted);margin:3px 0 0;letter-spacing:1.4px;text-transform:uppercase}
+  .pill{
+    padding:9px 13px;border:1px solid rgba(255,255,255,.1);border-radius:999px;
+    background:rgba(255,255,255,.04);font-size:12px;color:#cbd2e8
+  }
+  .hero{text-align:center;padding:55px 0 28px}
+  .hero .eyebrow{color:#b8a5ff;font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+  .hero h2{font-size:clamp(36px,6vw,70px);line-height:.98;margin:14px 0 18px;letter-spacing:-3px}
+  .hero h2 span{
+    background:linear-gradient(90deg,#fff,#bda8ff 45%,#5ee7f5);
+    -webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .hero p{max-width:650px;margin:auto;color:var(--muted);font-size:15px;line-height:1.7}
+  .studio{
+    margin:24px 0 28px;padding:20px;border:1px solid rgba(255,255,255,.09);
+    border-radius:28px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));
+    box-shadow:0 30px 80px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.06);
+    backdrop-filter:blur(18px)
+  }
+  .controls{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;margin-bottom:20px}
+  .control{
+    background:rgba(5,7,15,.45);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:12px 14px
+  }
+  label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:#7f89a8;margin-bottom:7px}
+  select,input[type=range]{
+    width:100%;border:0;outline:0;background:transparent;color:#fff;font:inherit
+  }
+  select{cursor:pointer}
+  select option{background:#171a29;color:#fff}
+  .play-status{
+    min-width:125px;display:flex;align-items:center;justify-content:center;gap:8px;
+    border-radius:16px;background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(34,211,238,.1));
+    border:1px solid rgba(139,92,246,.22);font-size:12px;color:#cfd4e7
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:#68718c;box-shadow:none}
+  .dot.live{background:#5ee7a8;box-shadow:0 0 12px #5ee7a8}
+  .keyboard-shell{padding:18px;border-radius:22px;background:#070912;border:1px solid rgba(255,255,255,.07)}
+  .keyboard{
+    display:grid;grid-template-columns:repeat(8,minmax(55px,1fr));gap:8px;
+    max-width:850px;margin:auto
+  }
+  .key{
+    position:relative;height:190px;border:0;border-radius:0 0 15px 15px;
+    background:linear-gradient(180deg,#fff,#e5e7ef 68%,#c9ccda);
+    color:#171827;cursor:pointer;box-shadow:0 7px 0 #9da1b0,0 14px 22px rgba(0,0,0,.24);
+    transition:transform .08s,box-shadow .08s,filter .12s;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:18px
+  }
+  .key:after{
+    content:"";position:absolute;top:0;left:10%;right:10%;height:5px;border-radius:0 0 8px 8px;
+    background:rgba(139,92,246,.16)
+  }
+  .key .letter{font-size:24px;font-weight:800;line-height:1}
+  .key .note{font-size:10px;color:#777b8b;margin-top:7px;letter-spacing:1px}
+  .key.active{
+    transform:translateY(7px);box-shadow:0 0 0 #9da1b0,0 5px 25px var(--glow);
+    background:linear-gradient(180deg,#d9c9ff,#a78bfa 55%,#7c3aed);color:white;filter:saturate(1.2)
+  }
+  .key.active .note{color:#eee}
+  .hint{text-align:center;color:#6f7894;font-size:11px;margin:15px 0 2px}
+  .shortcut{display:inline-block;padding:4px 7px;border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#aeb6cf;background:rgba(255,255,255,.04)}
+  .melodies{margin-top:20px;display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+  .melody{
+    border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04);color:#cbd2e8;
+    padding:10px 13px;border-radius:12px;cursor:pointer;font-size:12px;transition:.18s
+  }
+  .melody:hover,.melody.selected{background:rgba(139,92,246,.17);border-color:rgba(139,92,246,.45);color:white;transform:translateY(-2px)}
+  .visualizer{height:70px;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:16px;overflow:hidden}
+  .bar{width:4px;height:9px;border-radius:9px;background:linear-gradient(#8b5cf6,#22d3ee);opacity:.35;transition:height .08s,opacity .08s}
+  .playing .bar{animation:bounce .45s ease-in-out infinite alternate}
+  .playing .bar:nth-child(2n){animation-delay:-.18s}.playing .bar:nth-child(3n){animation-delay:-.3s}
+  @keyframes bounce{from{height:7px;opacity:.35}to{height:45px;opacity:1}}
+  .info{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:20px 0 45px}
+  .card{padding:19px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+  .card strong{font-size:13px}.card p{font-size:12px;line-height:1.6;color:var(--muted);margin:7px 0 0}
+  footer{border-top:1px solid rgba(255,255,255,.07);padding:24px 0 35px;text-align:center;color:#737b94;font-size:11px}
+  footer b{color:#c7b9ff}
+  @media(max-width:700px){
+    .wrap{width:min(100% - 20px,560px)}
+    header{padding-top:18px}.pill{display:none}
+    .hero{padding:42px 0 20px}.hero h2{letter-spacing:-2px}
+    .studio{padding:12px;border-radius:20px}
+    .controls{grid-template-columns:1fr 1fr}.play-status{grid-column:1/-1;min-height:45px}
+    .keyboard-shell{padding:10px;overflow-x:auto}
+    .keyboard{min-width:650px}
+    .key{height:160px}.info{grid-template-columns:1fr}
+  }
+  @media(max-width:430px){
+    .controls{grid-template-columns:1fr}.play-status{grid-column:auto}
+    .keyboard{min-width:610px}.key{height:145px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">♫</div>
+        <div><h1>Halim Piano</h1><p>Keyboard Playground</p></div>
+      </div>
+      <div class="pill">Press your keys · Make some music</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">A tiny music studio in your browser</div>
+      <h2>Turn your keyboard into a <span>piano.</span></h2>
+      <p>No complicated setup. Use the home row, explore different piano voices, and play a few melodies just for fun.</p>
+    </section>
+
+    <section class="studio">
+      <div class="controls">
+        <div class="control">
+          <label for="instrument">Piano voice</label>
+          <select id="instrument">
+            <option value="grand">Grand Piano</option>
+            <option value="soft">Soft Piano</option>
+            <option value="bright">Bright Piano</option>
+            <option value="electric">Electric Piano</option>
+            <option value="musicbox">Music Box</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="volume">Volume</label>
+          <input id="volume" type="range" min="0" max="100" value="72">
+        </div>
+        <div class="play-status"><span class="dot" id="dot"></span><span id="status">Ready to play</span></div>
+      </div>
+
+      <div class="keyboard-shell">
+        <div class="keyboard" id="keyboard">
+          <button class="key" data-key="a" data-note="C4"><span class="letter">A</span><span class="note">C4</span></button>
+          <button class="key" data-key="s" data-note="D4"><span class="letter">S</span><span class="note">D4</span></button>
+          <button class="key" data-key="d" data-note="E4"><span class="letter">D</span><span class="note">E4</span></button>
+          <button class="key" data-key="f" data-note="F4"><span class="letter">F</span><span class="note">F4</span></button>
+          <button class="key" data-key="g" data-note="G4"><span class="letter">G</span><span class="note">G4</span></button>
+          <button class="key" data-key="h" data-note="A4"><span class="letter">H</span><span class="note">A4</span></button>
+          <button class="key" data-key="j" data-note="B4"><span class="letter">J</span><span class="note">B4</span></button>
+          <button class="key" data-key="k" data-note="C5"><span class="letter">K</span><span class="note">C5</span></button>
+        </div>
+        <div class="hint">Use <span class="shortcut">A S D F G H J K</span> on your keyboard to play</div>
+      </div>
+
+      <div class="visualizer" id="visualizer">
+        <i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i>
+      </div>
+
+      <div class="melodies">
+        <button class="melody" data-song="twinkle">★ Twinkle</button>
+        <button class="melody" data-song="ode">♪ Ode to Joy</button>
+        <button class="melody" data-song="scale">↑ Simple Scale</button>
+        <button class="melody" data-song="random">✦ Surprise Me</button>
+      </div>
+    </section>
+
+    <section class="info">
+      <div class="card"><strong>🎹 Simple by design</strong><p>Eight carefully mapped keys keep the experience playful instead of overwhelming.</p></div>
+      <div class="card"><strong>⚡ Instant response</strong><p>Press a key and watch it light up immediately with a responsive visual effect.</p></div>
+      <div class="card"><strong>🎧 Multiple voices</strong><p>Switch between acoustic and electronic-style sounds whenever you want a new mood.</p></div>
+    </section>
+  </main>
+
+  <footer>Designed & developed with care by <b>Halim</b> · © <span id="year"></span> All rights reserved.</footer>
+</div>
+
+<script>
+(() => {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ctx = null;
+  const active = new Map();
+  const keyMap = {a:"C4",s:"D4",d:"E4",f:"F4",g:"G4",h:"A4",j:"B4",k:"C5"};
+  const freq = {C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,C5:523.25};
+  const instrument = document.getElementById("instrument");
+  const volume = document.getElementById("volume");
+  const status = document.getElementById("status");
+  const dot = document.getElementById("dot");
+  const visualizer = document.getElementById("visualizer");
+  const keys = [...document.querySelectorAll(".key")];
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  function ensureAudio(){
+    if(!ctx) ctx = new AudioCtx();
+    if(ctx.state === "suspended") ctx.resume();
+  }
+
+  function pressVisual(key, on){
+    key.classList.toggle("active", on);
+    if(on){
+      status.textContent = "Playing";
+      dot.classList.add("live");
+      visualizer.classList.add("playing");
+    }
+  }
+
+  function releaseVisual(key){
+    key.classList.remove("active");
+    if(!document.querySelector(".key.active")){
+      status.textContent = "Ready to play";
+      dot.classList.remove("live");
+      visualizer.classList.remove("playing");
+    }
+  }
+
+  function sound(note, keyId){
+    ensureAudio();
+    if(active.has(keyId)) return;
+    const now = ctx.currentTime, f = freq[note];
+    const master = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    const osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
+    const gain1 = ctx.createGain(), gain2 = ctx.createGain();
+
+    const type = instrument.value;
+    let wave = "triangle", second = "sine", decay = 1.8, attack = .008, level = .20;
+    if(type==="soft"){ wave="sine"; second="triangle"; decay=2.5; level=.17; }
+    if(type==="bright"){ wave="triangle"; second="square"; decay=1.25; level=.17; }
+    if(type==="electric"){ wave="sine"; second="sine"; decay=2.0; level=.20; }
+    if(type==="musicbox"){ wave="sine"; second="sine"; decay=1.5; level=.18; }
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(type==="bright"?4200:3000, now);
+    osc1.type=wave; osc2.type=second;
+    osc1.frequency.setValueAtTime(f,now);
+    osc2.frequency.setValueAtTime(f*2.01,now);
+    gain1.gain.setValueAtTime(0,now);
+    gain1.gain.linearRampToValueAtTime(level,now+attack);
+    gain1.gain.exponentialRampToValueAtTime(.0001,now+decay);
+    gain2.gain.setValueAtTime(0,now);
+    gain2.gain.linearRampToValueAtTime(level*(type==="musicbox"?.42:.22),now+attack);
+    gain2.gain.exponentialRampToValueAtTime(.0001,now+decay*.65);
+
+    master.gain.value = Number(volume.value)/100;
+    osc1.connect(gain1).connect(filter);
+    osc2.connect(gain2).connect(filter);
+    filter.connect(master).connect(ctx.destination);
+    osc1.start(now); osc2.start(now);
+    osc1.stop(now+decay+.1); osc2.stop(now+decay+.1);
+    active.set(keyId,{master,osc1,osc2});
+  }
+
+  function playKey(id){
+    const key = document.querySelector(`[data-key="${id}"]`);
+    if(!key) return;
+    pressVisual(key,true);
+    sound(key.dataset.note,id);
+  }
+
+  function releaseKey(id){
+    const key = document.querySelector(`[data-key="${id}"]`);
+    const item = active.get(id);
+    if(item && ctx){
+      const now=ctx.currentTime;
+      item.master.gain.cancelScheduledValues(now);
+      item.master.gain.setTargetAtTime(0,now,.06);
+      setTimeout(()=>{try{item.osc1.stop();item.osc2.stop()}catch(e){}},250);
+      active.delete(id);
+    }
+    if(key) releaseVisual(key);
+  }
+
+  window.addEventListener("keydown", e => {
+    const id=e.key.toLowerCase();
+    if(keyMap[id] && !e.repeat){ e.preventDefault(); playKey(id); }
+  });
+  window.addEventListener("keyup", e => {
+    const id=e.key.toLowerCase();
+    if(keyMap[id]) releaseKey(id);
+  });
+
+  keys.forEach(key=>{
+    key.addEventListener("pointerdown",e=>{e.preventDefault();playKey(key.dataset.key)});
+    ["pointerup","pointercancel","pointerleave"].forEach(ev=>key.addEventListener(ev,()=>releaseKey(key.dataset.key)));
+  });
+
+  // Small melody player
+  const songs = {
+    twinkle:["C4","C4","G4","G4","A4","A4","G4","F4","F4","E4","E4","D4","D4","C4"],
+    ode:["E4","E4","F4","G4","G4","F4","E4","D4","C4","C4","D4","E4","E4","D4","D4"],
+    scale:["C4","D4","E4","F4","G4","A4","B4","C5","B4","A4","G4","F4","E4","D4","C4"],
+    random:[]
+  };
+  songs.random = Array.from({length:18},()=>Object.values(freq)[Math.floor(Math.random()*8)]);
+  let playingSong=false;
+
+  function noteToKey(note){ return Object.entries(keyMap).find(([,n])=>n===note)?.[0]; }
+  function playSong(name){
+    if(playingSong) return;
+    playingSong=true;
+    const song = name==="random" ? Array.from({length:18},()=>Object.values(freq)[Math.floor(Math.random()*8)]) : songs[name];
+    document.querySelectorAll(".melody").forEach(b=>b.classList.toggle("selected",b.dataset.song===name));
+    song.forEach((note,i)=>{
+      setTimeout(()=>{
+        const id=noteToKey(note)||Object.keys(keyMap)[Math.floor(Math.random()*8)];
+        playKey(id);
+        setTimeout(()=>releaseKey(id),260);
+        if(i===song.length-1){
+          setTimeout(()=>{playingSong=false;document.querySelectorAll(".melody").forEach(b=>b.classList.remove("selected"));},320);
+        }
+      },i*330);
+    });
+  }
+  document.querySelectorAll(".melody").forEach(b=>b.addEventListener("click",()=>playSong(b.dataset.song)));
+  volume.addEventListener("input",()=>{});
+})();
+</script>
+</body>
+</html>
